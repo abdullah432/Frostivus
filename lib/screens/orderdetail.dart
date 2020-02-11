@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:frostivus/models/order.dart';
 import 'package:frostivus/utils/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderDetail extends StatefulWidget {
   final String appBarTitle;
@@ -20,7 +21,7 @@ class OrderDetailState extends State<OrderDetail> {
   DatabaseHelper databaseHelper = DatabaseHelper();
   //OrderDetail Data
   var flavorArray = ['Strawberry', 'Chocolate', 'Mango'];
-  var toppingArray = ['Chocolate','Sprinkle', 'Marshmallow'];
+  var toppingArray = ['Chocolate', 'Sprinkle', 'Marshmallow'];
   String selectedFlavor = 'Strawberry';
   String selectedTopping = 'Marshmallow';
 
@@ -242,22 +243,24 @@ class OrderDetailState extends State<OrderDetail> {
     this.order.flavor = selectedFlavor;
     this.order.topping = selectedTopping;
 
-    moveToLastScreen();
-
     int result;
 
     if (order.id == null) {
       //insert operation
       result = await databaseHelper.insertOrder(order);
       debugPrint('insert operation');
-      if(result != 0){
+      if (result != 0) {
+        // updateCupsAndSpoonsData();
+        moveToLastScreen();
         showAlertDialog('Status', 'Order Saved Successfully');
       }
     } else {
       //update operation
       debugPrint('update operation');
       result = await databaseHelper.updateOrder(order);
-      if(result != 0) {
+      if (result != 0) {
+        updateCupsAndSpoonsData();
+        moveToLastScreen();
         showAlertDialog('Status', 'Order Updated Successfully');
       }
     }
@@ -286,5 +289,15 @@ class OrderDetailState extends State<OrderDetail> {
 
   void moveToLastScreen() {
     Navigator.pop(context, true);
+  }
+
+  void updateCupsAndSpoonsData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int cups = (prefs.getInt('totalcups') ?? 50) - 1;
+    int spoons = (prefs.getInt('totalspoons') ?? 50) - 1;
+    debugPrint('cups: ' + cups.toString());
+    //set new values
+    prefs.setInt('totalcups', cups);
+    prefs.setInt('totalspoons', spoons);
   }
 }
